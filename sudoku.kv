@@ -1,5 +1,10 @@
 <Button>:
     size_hint: (.3, .3)
+    background_normal: ''
+    background_down: ''
+    background_disabled_normal: ''
+    background_color: (0, .3137, .0888, 1)
+    font_size: 20
 
 <SudokuWindow>:
 
@@ -10,7 +15,8 @@
         Rectangle:
             pos: self.pos
             size: self.size
-            source: 'sudoku_background.png'   
+            source: 'sudoku_background.png'
+
     GridLayout:
         cols:2
         pos_hint: {"y": 0}

@@ -4,7 +4,6 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.config import Config
-from kivy.properties import ObjectProperty
 
 from time import sleep
 import threading
@@ -17,33 +16,34 @@ Config.set('graphics', 'height', 610)
 class SudokuWindow(FloatLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # app = App.get_running_app()
         self.resolve_button = self.ids.resolve_button
         self.reset_button = self.ids.reset_button
-
-        # base grid 
-        self.cols=1
+        self._disable_button(self.reset_button)
         
         # sudoku grid
+        self.grids = self._read_grids()
+        self.current_grid = 1
         self.sudoku_grid = GridLayout(cols=9, row_force_default=True, row_default_height=60)
         self.label_table = []
-        self.sudoku_table = [
-            [0,4,0,5,0,0,0,1,0],
-            [0,6,0,8,4,0,0,0,0],
-            [0,0,1,0,0,0,0,9,0],
-            [5,0,0,0,0,0,4,0,1],
-            [0,0,2,0,0,5,0,0,0],
-            [1,0,0,0,0,3,0,0,7],
-            [0,0,0,7,9,0,1,0,5],
-            [0,0,0,0,0,2,0,4,0],
-            [0,0,0,1,3,0,9,0,6]
-            ]
+        self.sudoku_table = self.grids[5]
 
         self._init_grid(self.sudoku_grid ,self.sudoku_table, self.label_table)
         self.add_widget(self.sudoku_grid)
 
+    
+
     @staticmethod
     def _init_grid(grid, sudoku_grid, label_grid):
+        """
+        Method to initialize the sudoku grid to the GridLabel in the Window.
+        Should be called only when initializing the Window
+        
+        Args:
+            grid (GridLayout): GridLayout inside which the grid will be initialized
+            sudoku_grid ([int]): list of int lists; imitation of the sudoku grid. 
+                                 Contains that are to be respresented in with Labels inside grid
+            label_grid (list): empty list. used to store the Labels that are the representations of the sudoku_grid
+        """
         for row in range(9):
             label_grid.append([])
             for col in range(9):
@@ -55,8 +55,16 @@ class SudokuWindow(FloatLayout):
                     label.text = " "
                 label_grid[row].append(label)
                 grid.add_widget(label)
+
+    # ---------- SUDOKU RESOLVING METHODS ----------
     
     def _is_empty(self):
+        """method to seek for empty position inside the sudoku gid
+        
+        Returns:
+            [(int, int)]: tuple representing the row and column(position) of the empty box.
+                          if empty position not found returns None
+        """
         for row in range(9):
             for col in range(9):
                 if self.label_table[row][col].text == ' ':
@@ -64,6 +72,16 @@ class SudokuWindow(FloatLayout):
         return None
 
     def _is_available(self, row, col, nbr):
+        """method to check if the nbr can be inserted in the row, col with respect to sudoku rules
+        
+        Args:
+            row (int): numeric representation of the row of the sudoku gird
+            col (int): numeric representation of the column of the sudoku gird
+            nbr (int): number in range(1,10) to be in row, col in the sudoku grid
+        
+        Returns:
+            boolean: return True if the number can placed in the row, col position. Returns False otherwise.
+        """
 
         for c in range(9):
             if self.label_table[row][c].text == nbr:
@@ -83,13 +101,22 @@ class SudokuWindow(FloatLayout):
         return True
 
     def _resolve(self):
+        """
+        Method to resolve the displayed sudoku gird and visualize the resolving proccess.
+        Using recursive backtracking logic. 
+        
+        Returns:
+            boolean: returns True if the grid is resolved. 
+            Returns false if the value inserted in current call is making the grid unresolvable, 
+            forces the algorithm to backtrack the changes
+        """
 
-        self.resolve_button.disabled = True
-        self.reset_button.disabled = True
+        self._disable_button(self.resolve_button)
+        self._disable_button(self.reset_button)
 
         position = self._is_empty()
         if not position:
-            self.reset_button.disabled = False
+            self._enable_button(self.reset_button)
             return True
         
         row, col = position
@@ -97,17 +124,31 @@ class SudokuWindow(FloatLayout):
         for num in range(1,10):
             if self._is_available(row, col, str(num)):
                 self.label_table[row][col].text = str(num)
-                sleep(0.00025)
+                sleep(0.025)
                 if self._resolve():
                     return True
 
                 self.label_table[row][col].text = " "
-                sleep(0.00025)
+                sleep(0.025)
         return False
 
-    def _reset_grid(self):
+    def btn_resolve(self):
+        """method to run the _resolve method using threading
+        """
+        threading.Thread(target=self._resolve).start()
 
-        self.reset_button.disabled = True
+    def btn_reset(self):
+        """method to run the _reset_grid method using threading
+        """
+        threading.Thread(target=self._reset_grid).start()
+
+    # ---------- GUI MANAGEMENT METHODS ----------
+
+    def _reset_grid(self):
+        """Method to reset the resolved sudoku grid to the unresolved state
+        """
+
+        self._disable_button(self.reset_button)
 
         for row in range(9):
             for col in range(9):
@@ -118,12 +159,37 @@ class SudokuWindow(FloatLayout):
                     self.label_table[row][col].text = " "
                 sleep(0.05)    
         self.resolve_button.disabled = False
+        self._enable_button(self.resolve_button)
 
-    def btn_resolve(self):
-        threading.Thread(target=self._resolve).start()
+    @staticmethod
+    def _disable_button(button):
+        """method to handle all the actions while disabling button provided as an argument
+        
+        Args:
+            button (Buton): Button to be disabled
+        """
+        button.background_color = (0, .3137, .0888, 0.5)
+        button.disabled = True
+    
+    @staticmethod
+    def _enable_button(button):
+        """method to handle all the actions while enabling button provided as an argument
+        
+        Args:
+            button (Buton): Button to be enabled
+        """
+        button.background_color = (0, .3137, .0888, 1)
+        button.disabled = False
 
-    def btn_reset(self):
-        threading.Thread(target=self._reset_grid).start()
+    @staticmethod
+    def _read_grids():
+        grids = ''
+        with open("sudoku_grids.txt") as grids_txt:
+            for line in grids_txt:
+                grids += line
+        
+        return eval(grids)
+
         
 class SudokuApp(App):
     def build(self):
