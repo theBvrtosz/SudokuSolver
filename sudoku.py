@@ -121,10 +121,12 @@ class SudokuWindow(FloatLayout):
 
         self._disable_button(self.resolve_button)
         self._disable_button(self.reset_button)
+        self._disable_pick_grid_buttons()
 
         position = self._is_empty()
         if not position:
             self._enable_button(self.reset_button)
+            self._enable_pick_grid_buttons()
             return True
         
         row, col = position
@@ -132,12 +134,12 @@ class SudokuWindow(FloatLayout):
         for num in range(1,10):
             if self._is_available(row, col, str(num)):
                 self.label_table[row][col].text = str(num)
-                sleep(0.025)
+                # sleep(0.025)
                 if self._resolve():
                     return True
 
                 self.label_table[row][col].text = " "
-                sleep(0.025)
+                # sleep(0.025)
         return False
 
     def btn_resolve(self):
@@ -163,11 +165,30 @@ class SudokuWindow(FloatLayout):
 
     def _next_grid(self):
         self.current_grid += 1
-        if self.current_grid == 5:
+        if self.current_grid == max(self.grids.keys()):
             self._disable_button(self.next_grid_button)
 
-        if self.current_grid != 1:
+        if self.current_grid == min(self.grids.keys()) + 1:
             self._enable_button(self.previous_grid_button)
+
+        if self.reset_button.state != 'disabled':
+            self._disable_button(self.reset_button)
+            self._enable_button(self.resolve_button)
+
+        self._set_grid(self.current_grid)
+
+    def _previous_grid(self):
+        self.current_grid -= 1
+        
+        if self.current_grid == min(self.grids.keys()):
+            self._disable_button(self.previous_grid_button)
+        
+        if self.current_grid == max(self.grids.keys()) - 1:
+            self._enable_button(self.next_grid_button)
+        
+        if self.reset_button.state != 'disabled':
+            self._disable_button(self.reset_button)
+            self._enable_button(self.resolve_button)
 
         self._set_grid(self.current_grid)
 
@@ -197,6 +218,24 @@ class SudokuWindow(FloatLayout):
         """
         button.background_color = (0, .3137, .0888, 1)
         button.disabled = False
+
+    def _disable_pick_grid_buttons(self):
+        if self.next_grid_button.state != 'disabled':
+            self._disable_button(self.next_grid_button)
+
+        if self.previous_grid_button.state != 'disabled':
+            self._disable_button(self.previous_grid_button)
+
+    def _enable_pick_grid_buttons(self):
+        if self.current_grid == min(self.grids.keys()):
+            self._enable_button(self.next_grid_button)
+
+        elif self.current_grid == max(self.grids.keys()):
+            self._enable_button(self.previous_grid_button)
+
+        else:
+            self._enable_button(self.next_grid_button)
+            self._enable_button(self.previous_grid_button)
 
     @staticmethod
     def _read_grids():
