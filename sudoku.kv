@@ -1,15 +1,16 @@
 <Button>:
     size_hint: (.3, .3)
     background_normal: ''
-    background_down: ''
     background_disabled_normal: ''
     background_color: (0, .3137, .0888, 1)
-    font_size: 20
+
 
 <SudokuWindow>:
 
     resolve_button: resolve_button
     reset_button: reset_button
+    previous_grid_button: previous_grid_button
+    next_grid_button: next_grid_button
 
     canvas.before:
         Rectangle:
@@ -18,7 +19,7 @@
             source: 'sudoku_background.png'
 
     GridLayout:
-        cols:2
+        cols:4
         pos_hint: {"y": 0}
         size_hint: (1, .1)
         padding: (5, 0, 5, 5)
@@ -33,4 +34,13 @@
             id: reset_button
             text: "Reset"
             on_release: root.btn_reset()
+
+        Button:
+            id: previous_grid_button
+            text: "<"
+            
+        Button:
+            id: next_grid_button
+            text: ">"
+            on_release: root._next_grid()
             

@@ -4,6 +4,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.config import Config
+from kivy.metrics import sp
 
 from time import sleep
 import threading
@@ -16,24 +17,31 @@ Config.set('graphics', 'height', 610)
 class SudokuWindow(FloatLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        # getting the ids from the .kv file
         self.resolve_button = self.ids.resolve_button
         self.reset_button = self.ids.reset_button
-        self._disable_button(self.reset_button)
+        self.previous_grid_button = self.ids.previous_grid_button
+        self.next_grid_button = self.ids.next_grid_button
         
-        # sudoku grid
+        
+        # reading grids from .txt
         self.grids = self._read_grids()
         self.current_grid = 1
-        self.sudoku_grid = GridLayout(cols=9, row_force_default=True, row_default_height=60)
-        self.label_table = []
-        self.sudoku_table = self.grids[5]
+        self.sudoku_table = self.grids[self.current_grid]
 
+        # setting up the layout 
+        self.sudoku_grid = GridLayout(cols=9, row_force_default=True, row_default_height= sp(60))
+
+        # inntitializing the label grid with default first grid
+        self.label_table = []
         self._init_grid(self.sudoku_grid ,self.sudoku_table, self.label_table)
         self.add_widget(self.sudoku_grid)
 
-    
+        self._disable_button(self.reset_button)
+        self._disable_button(self.previous_grid_button)
 
-    @staticmethod
-    def _init_grid(grid, sudoku_grid, label_grid):
+    def _init_grid(self, grid, sudoku_grid, label_grid):
         """
         Method to initialize the sudoku grid to the GridLabel in the Window.
         Should be called only when initializing the Window
@@ -48,7 +56,7 @@ class SudokuWindow(FloatLayout):
             label_grid.append([])
             for col in range(9):
                 nbr = sudoku_grid[row][col]
-                label = Label(font_size=25, bold=True, color=[0,0,0,1])
+                label = Label(font_size= sp(25), bold=True, color=[0,0,0,1])
                 if nbr != 0:
                     label.text = str(nbr)
                 else:
@@ -144,23 +152,32 @@ class SudokuWindow(FloatLayout):
 
     # ---------- GUI MANAGEMENT METHODS ----------
 
+    def _set_grid(self, grid_nbr):
+        for row in range(9):
+            for col in range(9):
+                nbr = str(self.grids[grid_nbr][row][col])
+                if nbr == "0":
+                    self.label_table[row][col].text = ' '
+                else:
+                    self.label_table[row][col].text = nbr
+
+    def _next_grid(self):
+        self.current_grid += 1
+        if self.current_grid == 5:
+            self._disable_button(self.next_grid_button)
+
+        if self.current_grid != 1:
+            self._enable_button(self.previous_grid_button)
+
+        self._set_grid(self.current_grid)
+
     def _reset_grid(self):
         """Method to reset the resolved sudoku grid to the unresolved state
         """
-
         self._disable_button(self.reset_button)
-
-        for row in range(9):
-            for col in range(9):
-                nbr = self.sudoku_table[row][col]
-                if nbr != 0:
-                    self.label_table[row][col].text = str(nbr)
-                else:
-                    self.label_table[row][col].text = " "
-                sleep(0.05)    
-        self.resolve_button.disabled = False
+        self._set_grid(self.current_grid)
         self._enable_button(self.resolve_button)
-
+    
     @staticmethod
     def _disable_button(button):
         """method to handle all the actions while disabling button provided as an argument
