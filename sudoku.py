@@ -4,25 +4,28 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.config import Config
-from kivy.uix.button import Button
+from kivy.properties import ObjectProperty
 
 from time import sleep
 import threading
 
 Config.set('graphics','resizable', False)
-Config.set('graphics', 'width', 630)
-Config.set('graphics', 'height', 700)
+Config.set('graphics', 'width', 540)
+Config.set('graphics', 'height', 610)
 
 
 class SudokuWindow(FloatLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # app = App.get_running_app()
+        self.resolve_button = self.ids.resolve_button
+        self.reset_button = self.ids.reset_button
 
         # base grid 
         self.cols=1
         
         # sudoku grid
-        self.sudoku_grid = GridLayout(cols=9, row_force_default=True, row_default_height=70)
+        self.sudoku_grid = GridLayout(cols=9, row_force_default=True, row_default_height=60)
         self.label_table = []
         self.sudoku_table = [
             [0,4,0,5,0,0,0,1,0],
@@ -37,25 +40,7 @@ class SudokuWindow(FloatLayout):
             ]
 
         self._init_grid(self.sudoku_grid ,self.sudoku_table, self.label_table)
-
-
-        # adding new grid layout to the 10th row of the self grid for button management
-        self.button_grid = GridLayout(cols=2, pos_hint={'y':0,}, size_hint=(1,.1), padding=[10, 10], spacing=[10])
-
-        self.resolve_button = Button()
-        self.resolve_button.text = "resolve"
-        self.resolve_button.bind(on_release=self.btn_resolve)
-        self.button_grid.add_widget(self.resolve_button)
-
-        self.reset_button = Button()
-        self.reset_button.text = "reset"
-        self.reset_button.bind(on_release=self.btn_reset)
-        self.reset_button.disabled = True
-        self.button_grid.add_widget(self.reset_button)
-
-        # adding two grids to the self grid
         self.add_widget(self.sudoku_grid)
-        self.add_widget(self.button_grid)
 
     @staticmethod
     def _init_grid(grid, sudoku_grid, label_grid):
@@ -63,20 +48,18 @@ class SudokuWindow(FloatLayout):
             label_grid.append([])
             for col in range(9):
                 nbr = sudoku_grid[row][col]
-                label = Label()
-                label.font_size = 25
-                label.bold = True
+                label = Label(font_size=25, bold=True, color=[0,0,0,1])
                 if nbr != 0:
                     label.text = str(nbr)
                 else:
-                    label.text = "0"
+                    label.text = " "
                 label_grid[row].append(label)
                 grid.add_widget(label)
     
     def _is_empty(self):
         for row in range(9):
             for col in range(9):
-                if self.label_table[row][col].text == '0':
+                if self.label_table[row][col].text == ' ':
                     return (row, col)
         return None
 
@@ -100,6 +83,7 @@ class SudokuWindow(FloatLayout):
         return True
 
     def _resolve(self):
+
         self.resolve_button.disabled = True
         self.reset_button.disabled = True
 
@@ -117,31 +101,34 @@ class SudokuWindow(FloatLayout):
                 if self._resolve():
                     return True
 
-                self.label_table[row][col].text = "0"
+                self.label_table[row][col].text = " "
                 sleep(0.00025)
         return False
 
     def _reset_grid(self):
+
         self.reset_button.disabled = True
+
         for row in range(9):
             for col in range(9):
                 nbr = self.sudoku_table[row][col]
                 if nbr != 0:
                     self.label_table[row][col].text = str(nbr)
                 else:
-                    self.label_table[row][col].text = "0"
+                    self.label_table[row][col].text = " "
                 sleep(0.05)    
         self.resolve_button.disabled = False
 
-    def btn_resolve(self, instance):
+    def btn_resolve(self):
         threading.Thread(target=self._resolve).start()
 
-    def btn_reset(self, instance):
+    def btn_reset(self):
         threading.Thread(target=self._reset_grid).start()
         
 class SudokuApp(App):
     def build(self):
-        return SudokuWindow()
+        self.root = SudokuWindow()
+        return self.root
 
 if __name__ == "__main__":
     SudokuApp().run()

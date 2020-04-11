@@ -1,0 +1,30 @@
+<Button>:
+    size_hint: (.3, .3)
+
+<SudokuWindow>:
+
+    resolve_button: resolve_button
+    reset_button: reset_button
+
+    canvas.before:
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            source: 'sudoku_background.png'   
+    GridLayout:
+        cols:2
+        pos_hint: {"y": 0}
+        size_hint: (1, .1)
+        padding: (5, 0, 5, 5)
+        spacing: (10)
+
+        Button:
+            id: resolve_button
+            text: "Resolve"
+            on_release: root.btn_resolve()
+            
+        Button:
+            id: reset_button
+            text: "Reset"
+            on_release: root.btn_reset()
+            
